@@ -83,12 +83,12 @@ struct Config {
 
   byte GMT = 16;          // часовой пояс +13
   uint32_t cityID = 1;    // city ID
-  bool mqtt = 0;          // mqtt
-  char mqttID[32];        //
-  char mqttHost[32];      //
-  int mqttPort = 0;       //
-  char mqttLogin[16];     //
-  char mqttPass[16];      //
+  bool mqtt = 0;          // использовать mqtt
+  char mqttID[32];        // ID mqtt
+  char mqttHost[32];      // mqtt host
+  int mqttPort = 8883;    // Порт mqtt
+  char mqttLogin[16];     // mqtt логин
+  char mqttPass[16];      // mqtt пароль
 
   byte state = 1;         // состояние 0 выкл, 1 вкл
   byte group = 1;         // группа девайса (1-10)

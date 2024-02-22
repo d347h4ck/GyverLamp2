@@ -97,7 +97,7 @@ void setupAP() {
   WiFi.mode(WIFI_AP);
   delay(100);
   WiFi.softAP(AP_NameChar, WiFiPassword);
-  server.begin();
+  // server.begin();
   DEBUGLN("Setting AP Mode");
   DEBUG("AP IP: ");
   DEBUGLN(WiFi.softAPIP());
@@ -135,7 +135,7 @@ void setupLocal() {
       if (connect) {
         connTmr.stop();
         blink16(CRGB::Green);
-        server.begin();
+        // server.begin();
         DEBUG("Connected! Local IP: ");
         DEBUGLN(WiFi.localIP());
         delay(500);
@@ -152,6 +152,47 @@ void setupLocal() {
         }
       }
     }
+  }
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "GyverLamp2-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // Once connected, publish an announcement...
+      client.publish("GL/hello", "hello world");
+      // ... and resubscribe
+      client.subscribe("GL/state");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("] ");
+  mString topicStr(topic);
+  for (int i = 0; i < length; i++) {
+    Serial.print((char)payload[i]);
+  }
+  Serial.println();
+
+  // Switch on the LED if an 1 was received as first character
+  if (topicStr == "GL/state"){
+    char newState = (char)payload[0] - '0';
+    controlHandler(newState);
   }
 }
 

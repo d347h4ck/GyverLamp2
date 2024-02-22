@@ -10,7 +10,7 @@
 */
 
 /*
-  Версия 0.23b
+  Версия 0.24b
   Поправлена яркость рассвета
   Компилится на версии ядра esp v3
 
@@ -29,11 +29,11 @@
 
 // ------------ Кнопка -------------
 #define BTN_PIN 4           // пин кнопки GPIO4 (D2 на wemos/node), 0 для схемы с ESP-01
-#define USE_BTN 1           // 1 использовать кнопку, 0 нет
+#define USE_BTN 0           // 1 использовать кнопку, 0 нет
 
 // ------------- АЦП --------------
 #define USE_ADC 1           // можно выпилить АЦП
-#define USE_CLAP 1          // два хлопка в ладоши вкл выкл лампу
+#define USE_CLAP 0          // два хлопка в ладоши вкл выкл лампу
 #define MIC_VCC 12          // питание микрофона GPIO12 (D6 на wemos/node)
 #define PHOT_VCC 14         // питание фоторезистора GPIO14 (D5 на wemos/node)
 
@@ -106,20 +106,25 @@ const char WiFiPassword[] = "12345678";
 #include "ESP8266httpUpdate.h"  // OTA
 #include "mString.h"      // стринг билдер
 #include "Clap.h"         // обработка хлопков
+#include <PubSubClient.h> // mqtt client
 
 // ------------------- ДАТА --------------------
 Config cfg;
 Preset preset[MAX_PRESETS];
 Dawn dawn;
 Palette pal;
-WiFiServer server(80);
+// WiFiServer server(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
 WiFiUDP Udp;
 WiFiUDP ntpUDP;
 IPAddress broadIP;
 NTPClient ntp(ntpUDP);
 CRGB leds[MAX_LEDS];
 Time now;
-Button btn(BTN_PIN);
+#if (USE_BTN == 1)
+  Button btn(BTN_PIN);
+#endif
 timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
 timerMillis effTmr(30, true), onlineTmr(500, true), postDawn(10 * 60000ul);
 TimeRandom trnd;
@@ -129,7 +134,10 @@ Clap clap;
 
 uint16_t portNum;
 uint32_t udpTmr = 0, gotADCtmr = 0;
-byte btnClicks = 0, brTicks = 0;
+#if (USE_BTN == 1)
+  byte btnClicks = 0;
+  byte brTicks = 0;
+#endif
 unsigned char matrixValue[11][16];
 bool gotNTP = false, gotTime = false;
 bool loading = true;
@@ -145,7 +153,9 @@ void setup() {
   DEBUGLN();
 #endif
   startStrip();         // старт ленты
-  btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
+  #if (USE_BTN == 1)
+    btn.setLevel(digitalRead(BTN_PIN));   // смотрим что за кнопка
+  #endif
   EE_startup();         // читаем епром
 #ifndef SKIP_WIFI
   checkUpdate();        // индикация было ли обновление
@@ -153,6 +163,14 @@ void setup() {
   checkGroup();         // показываем или меняем адрес
   checkButton();        // проверяем кнопку на удержание
   startWiFi();          // старт вайфай
+  if (cfg.mqtt) {
+    mString mqttID(cfg.mqttID);
+    mString mqttHost(cfg.mqttHost);
+    mString mqttServer = mqttID + "." + mqttHost.c_str();
+    DEBUGLN(mqttServer.c_str());
+    client.setServer(mqttServer.c_str(), cfg.mqttPort);
+    client.setCallback(callback);
+  }
   setupTime();          // выставляем время
 #endif
   setupADC();           // настраиваем анализ
@@ -164,6 +182,8 @@ void loop() {
   yield();
 #ifndef SKIP_WIFI
   tryReconnect();     // пробуем переподключиться если WiFi упал
+  yield();
+  reconnect();
   yield();
   parsing();          // ловим данные
   yield();

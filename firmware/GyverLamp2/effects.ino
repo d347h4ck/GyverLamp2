@@ -271,8 +271,10 @@ void effectsRoutine() {
 
   if (CUR_PRES.advMode == GL_ADV_CLOCK && CUR_PRES.effect != 9) drawClock(mapFF(CUR_PRES.scale, 0, cfg.length - 7), 100, 0);
   // выводим нажатия кнопки
-  if (btnClicks > 0) fill_solid(leds, btnClicks, CRGB::White);
-  if (brTicks > 0) fill_solid(leds, brTicks, CRGB::Cyan);
+  #if (USE_BTN == 1)
+    if (btnClicks > 0) fill_solid(leds, btnClicks, CRGB::White);
+    if (brTicks > 0) fill_solid(leds, brTicks, CRGB::Cyan);
+  #endif
   yield();
   FastLED.show();
 }
