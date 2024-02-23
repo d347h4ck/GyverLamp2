@@ -105,6 +105,7 @@ void setupAP() {
 }
 
 void setupLocal() {
+  DEBUGLN("SetupLocal");
   if (cfg.ssid[0] == NULL && cfg.pass[0] == NULL) {
     DEBUGLN("WiFi not configured");
     setupAP();
@@ -155,26 +156,34 @@ void setupLocal() {
   }
 }
 
-void reconnect() {
+void mqttReconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "GyverLamp2-";
-    clientId += String(random(0xffff), HEX);
-    // Attempt to connect
-    if (client.connect(clientId.c_str())) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      client.publish("GL/hello", "hello world");
-      // ... and resubscribe
-      client.subscribe("GL/state");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+  if (mqttConnTmr.isReady()){
+    DEBUGLN("Mqtt Reconnect");
+    if (!cfg.WiFimode || WiFi.status() != WL_CONNECTED){
+      return;
+    }
+    else {     
+      if (!client.connected()) {
+        Serial.print("Attempting MQTT connection...");
+      // Create a random client ID
+        mString clientId = mString("Gyver-lamp2");
+        // Attempt to connect
+        if (client.connect(clientId.c_str())) {
+          Serial.println("connected");
+          // Once connected, publish an announcement...
+          client.publish("GL/hello", "hello world");
+          // ... and resubscribe
+          client.subscribe("GL/state");
+          mqttConnTmr.stop();          
+          return;
+        } else {
+          Serial.print("failed, rc=");
+          Serial.println(client.state());
+          mqttConnTmr.restart();
+          return;
+        }
+      }
     }
   }
 }

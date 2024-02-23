@@ -33,8 +33,12 @@ void setupADC() {
   phot.setDt(80);
   phot.setK(31);
 
+  volt.setDt(80);
+  volt.setK(31);
+
   if (cfg.adcMode == GL_ADC_BRI) switchToPhot();
   else if (cfg.adcMode == GL_ADC_MIC) switchToMic();
+  else if (cfg.adcMode == GL_ADC_VOL) switchToVol();  
 }
 
 
@@ -44,6 +48,7 @@ void checkAnalog() {
       case GL_ADC_NONE: break;
       case GL_ADC_BRI: checkPhot(); break;
       case GL_ADC_MIC: checkMusic(); break;
+      case GL_ADC_VOL: checkVoltage(); break;
       case GL_ADC_BOTH:
         {
           static timerMillis tmr(1000, 1);
@@ -91,6 +96,12 @@ void checkPhot() {
   phot.compute();
 }
 
+void checkVoltage() {
+  static timerMillis tmr(1000, true);
+  if (tmr.isReady()) volt.setRaw(analogRead(A0));
+  volt.compute();
+}
+
 byte getSoundVol() {
   switch (CUR_PRES.advMode) {
     case GL_ADV_VOL: return vol.getVol();
@@ -112,6 +123,12 @@ void switchToPhot() {
   pinMode(PHOT_VCC, OUTPUT);
   digitalWrite(PHOT_VCC, 1);
 }
+void switchToVol() {
+  digitalWrite(PHOT_VCC, 0);
+  pinMode(PHOT_VCC, INPUT);
+  digitalWrite(MIC_VCC, 0);
+  pinMode(MIC_VCC, INPUT);
+}
 void disableADC() {
   digitalWrite(PHOT_VCC, 0);
   pinMode(PHOT_VCC, INPUT);
@@ -123,10 +140,12 @@ void setupADC() {}
 void checkAnalog() {}
 void checkMusic() {}
 void checkPhot() {}
+void checkVoltage() {}
 byte getSoundVol() {
   return 0;
 }
 void switchToMic() {}
 void switchToPhot() {}
+void switchToVol() {}
 void disableADC() {}
 #endif

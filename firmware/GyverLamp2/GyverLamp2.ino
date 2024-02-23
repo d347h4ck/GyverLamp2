@@ -125,11 +125,12 @@ Time now;
 #if (USE_BTN == 1)
   Button btn(BTN_PIN);
 #endif
-timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
+timerMillis EEtmr(EE_TOUT), turnoffTmr, connTmr(120000ul), mqttConnTmr(120000ul), dawnTmr, holdPresTmr(30000ul), blinkTmr(300);
 timerMillis effTmr(30, true), onlineTmr(500, true), postDawn(10 * 60000ul);
 TimeRandom trnd;
 VolAnalyzer vol(A0), low, high;
 FastFilter phot;
+FastFilter volt;
 Clap clap;
 
 uint16_t portNum;
@@ -183,7 +184,7 @@ void loop() {
 #ifndef SKIP_WIFI
   tryReconnect();     // пробуем переподключиться если WiFi упал
   yield();
-  reconnect();
+  mqttReconnect();
   yield();
   parsing();          // ловим данные
   yield();

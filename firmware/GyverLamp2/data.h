@@ -1,8 +1,9 @@
 // -------------- ВНУТР. КОНСТАНТЫ ---------------
 #define GL_ADC_NONE 1
-#define GL_ADC_BRI 2
+#define GL_ADC_VOL 2
 #define GL_ADC_MIC 3
 #define GL_ADC_BOTH 4
+#define GL_ADC_BRI 5
 #define GL_TYPE_STRIP 1
 #define GL_TYPE_ZIG 2
 #define GL_TYPE_PARAL 3

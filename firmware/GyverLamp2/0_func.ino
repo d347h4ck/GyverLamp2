@@ -88,3 +88,22 @@ void drawClock(byte Y, byte speed, CRGB color) {
   drawDigit(m1, pos + 14, Y, color);
   drawDigit(m2, pos + 20, Y, color);
 }
+
+void plotVoltage() {
+  static timerMillis tmr(20000, true);
+  if (tmr.isReady()){    
+    float adc_voltage_fil = 0.0;
+    float adc_voltage_raw = 0.0;
+    float in_voltage_fil = 0.0;
+    float in_voltage_raw = 0.0;
+    adc_voltage_fil = volt.getFil() / 1024.0;
+    adc_voltage_raw = volt.getRaw() / 1024.0;
+    in_voltage_fil = adc_voltage_fil / 0.322;
+    in_voltage_fil = in_voltage_fil / 0.236;
+    in_voltage_raw = adc_voltage_raw / 0.322;
+    in_voltage_raw = in_voltage_raw / 0.236;
+    DEBUG(in_voltage_fil);
+    DEBUG(",");
+    DEBUGLN(in_voltage_raw);    
+  }
+}
